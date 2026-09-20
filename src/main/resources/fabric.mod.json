@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "luminanova",
+  "version": "${version}",
+  "name": "Lumina Nova",
+  "description": "Experimental client performance research for Minecraft Java 26.3.",
+  "authors": ["benjamincalledur10-bit"],
+  "contact": {
+    "sources": "https://github.com/benjamincalledur10-bit/Lumina_Nova",
+    "issues": "https://github.com/benjamincalledur10-bit/Lumina_Nova/issues"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "client": ["io.github.benjamincalledur10.luminanova.LuminaNovaClient"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "=26.3",
+    "java": ">=25",
+    "fabric-api": ">=${fabric_api_version}"
+  }
+}
