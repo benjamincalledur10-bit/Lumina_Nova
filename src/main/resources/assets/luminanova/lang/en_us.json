@@ -3,7 +3,7 @@
   "luminanova.video.title": "Lumina Nova — Video Settings",
   "luminanova.video.general": "General",
   "luminanova.video.optimization": "Optimization",
-  "luminanova.video.alpha": "v0.0.2-alpha · General",
+  "luminanova.video.alpha": "v0.0.3-alpha · General",
   "luminanova.video.save_error": "Could not save. Check latest.log.",
   "luminanova.options.ultra": "Ultra Optimization",
   "luminanova.options.ultra.value": "%s (preview)",
@@ -11,5 +11,7 @@
   "luminanova.options.ultra.pending": "Preview only — no effect on FPS",
   "modmenu.summaryTranslation.luminanova": "Experimental performance research and video settings.",
   "modmenu.descriptionTranslation.luminanova": "Minecraft 26.3 client mod. General video settings, experimental boolean frustum optimization and an Ultra Optimization preview preference. No FPS improvement or superiority over Sodium has been validated.",
-  "luminanova.options.fullscreen_resolution": "Fullscreen resolution"
+  "luminanova.options.fullscreen_resolution": "Fullscreen resolution",
+  "luminanova.video.apply": "Apply",
+  "luminanova.video.accept": "Accept"
 }

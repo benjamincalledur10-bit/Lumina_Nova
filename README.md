@@ -1,7 +1,7 @@
 # Lumina Nova
 
 Mod experimental de optimización para **Minecraft Java 26.3**, exclusivamente de cliente con Fabric.
-Versión experimental: `0.0.2-alpha`. Incluye la pestaña General de ajustes de vídeo, integración
+Versión experimental: `0.0.3-alpha`. Incluye la pestaña General de ajustes de vídeo, integración
 opcional con Mod Menu, un logo propio y la optimización experimental del frustum de la alpha anterior.
 **No hay una mejora de FPS validada** ni evidencia de superioridad sobre Sodium. Solo admite 26.3.
 
@@ -13,13 +13,17 @@ y su botón de configuración abre la misma pantalla. Mod Menu 21.0.0 para 26.3 
 - Renderizado: 2–50 chunks; simulación: 5–32 chunks.
 - Brillo, pantalla completa y pantalla completa exclusiva.
 - Resolución de pantalla completa, con los modos disponibles del monitor.
-- VSync y FPS máximos, con el límite sin restricciones de Minecraft al extremo del slider.
+- VSync y FPS máximos, de 10 a 250 en pasos de 10, más Sin límite al extremo del slider.
+  Por ejemplo, 120 actualiza el limitador real del juego a 120 al pulsar Aplicar/Aceptar.
 - En macOS, visibilidad del menú/Dock en pantalla completa.
 - **Ultra Optimization (vista previa)**: interruptor que guarda una preferencia; en esta alpha
   no modifica el motor, los chunks ni las sombras y no tiene efecto sobre los FPS. Se indica en
   la pantalla y en su tooltip. Su implementación queda pendiente para una futura release.
 
-Pulsa **Hecho** o Escape para guardar y volver. Los ajustes del juego se guardan en `options.txt`;
+Pulsa **Aplicar** para guardar y activar los cambios, o **Aceptar** para aplicarlos y volver.
+Escape vuelve sin aplicar los cambios pendientes. La interfaz usa una barra lateral y filas
+con el nombre a la izquierda y el valor a la derecha. Haz clic o arrastra la fila para ajustar
+un valor; con teclado, usa Tab y las flechas izquierda/derecha. La rueda desplaza las opciones. Los ajustes del juego se guardan en `options.txt`;
 la preferencia Ultra se guarda como `ultra_optimization` en `config/luminanova.properties`.
 Guardar esta preferencia conserva las demás propiedades y normaliza el formato del archivo.
 Si el archivo es inválido o no se puede guardar, se muestra un error y se conserva.
@@ -49,7 +53,7 @@ El wrapper comprueba el SHA-256 de la distribución. No hay versiones dinámicas
 
 En macOS, si ya tienes JDK 25 instalado: `export JAVA_HOME=$(/usr/libexec/java_home -v 25)`.
 La primera compilación descarga Gradle, Minecraft y sus dependencias.
-El JAR instalable queda en `build/libs/lumina-nova-0.0.2-alpha.jar`;
+El JAR instalable queda en `build/libs/lumina-nova-0.0.3-alpha.jar`;
 el archivo `-sources.jar` contiene código fuente y no se instala como mod.
 Para probarlo, usa una instalación separada de Minecraft 26.3 con Fabric Loader y Fabric API.
 
@@ -103,7 +107,7 @@ Los datos de JMH se guardan en `build/frustum-benchmark.json`. Consulta los
 La prueba de interfaz comprueba navegación, guardado y recarga de ajustes, rangos del servidor
 integrado e integración registrada en Mod Menu, y captura el framebuffer del juego para revisar
 la presentación. Usa `run-ui-smoke/`, una instalación de prueba separada que se reinicia cada vez.
-Consulta [la validación de 0.0.2-alpha](docs/ALPHA_0.0.2_VALIDATION.md) y [el logo](docs/branding/README.md).
+Consulta [la validación de 0.0.3-alpha](docs/ALPHA_0.0.2_VALIDATION.md) y [el logo](docs/branding/README.md).
 
 Referencias: [Fabric para 26.3](https://fabricmc.net/2026/09/15/263.html),
 [proyecto de ejemplo oficial](https://github.com/FabricMC/fabric-example-mod/tree/26.3).

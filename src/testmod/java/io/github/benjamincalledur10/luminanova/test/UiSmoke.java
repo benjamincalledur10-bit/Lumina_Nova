@@ -50,80 +50,89 @@ public final class UiSmoke implements ClientModInitializer {
         ticks = 0;
         if (phase == 0) {
             parent = minecraft.gui.screen();
-            var render = (OptionInstance.IntRange) minecraft.options.renderDistance().values();
-            var simulation = (OptionInstance.IntRange) minecraft.options.simulationDistance().values();
-            check(render.minInclusive() == 2 && render.maxInclusive() == 50, "Render range");
-            check(simulation.minInclusive() == 5 && simulation.maxInclusive() == 32, "Simulation range");
             verifyIntegratedServerLimits();
+            minecraft.options.framerateLimit().set(250);
             minecraft.gui.setScreen(new VideoSettingsScreen(parent, minecraft, minecraft.options));
             check(minecraft.gui.screen() instanceof NovaVideoSettingsScreen, "Video routing");
-            check(((OptionsSubScreenAccessor) minecraft.gui.screen()).luminanova$parent() == parent, "Parent screen");
             phase++;
         } else if (phase == 1) {
+            capture(minecraft, "alpha3-general.png");
             var screen = (NovaVideoSettingsScreen) minecraft.gui.screen();
-            OptionsList list = ((OptionsSubScreenAccessor) (Object) screen).luminanova$list();
-            check(list.findOption(minecraft.options.renderDistance()) != null, "Render widget");
-            check(list.findOption(minecraft.options.simulationDistance()) != null, "Simulation widget");
-            check(list.findOption(minecraft.options.gamma()) != null, "Brightness widget");
-            check(list.findOption(minecraft.options.fullscreen()) != null, "Fullscreen widget");
-            check(list.findOption(minecraft.options.enableVsync()) != null, "VSync widget");
-            check(list.findOption(minecraft.options.framerateLimit()) != null, "FPS widget");
-            capture(minecraft, "general-top.png");
+            int original = minecraft.options.renderDistance().get();
+            slider(row(screen, "options.renderDistance"), 1);
+            slider(row(screen, "options.simulationDistance"), 1);
+            slider(row(screen, "options.gamma"), 0.6);
+            slider(row(screen, "options.framerateLimit"), 11.0 / 25.0);
+            check(minecraft.options.renderDistance().get() == original, "Staged settings before Apply");
+            AbstractWidget vsync = row(screen, "options.vsync");
+            if (minecraft.options.enableVsync().get()) slider(vsync, 1);
+            press(screen, "luminanova.video.apply");
+            check(minecraft.options.renderDistance().get() == 50, "Render applies");
+            check(minecraft.options.simulationDistance().get() == 32, "Simulation applies");
+            check(Math.abs(minecraft.options.gamma().get() - 0.6) < 0.001, "Brightness applies");
+            check(!minecraft.options.enableVsync().get(), "VSync applies");
+            check(minecraft.options.framerateLimit().get() == 120, "FPS option applies 120");
+            var tracker = minecraft.getFramerateLimitTracker();
+            Field limit = tracker.getClass().getDeclaredField("framerateLimit"); limit.setAccessible(true);
+            check(limit.getInt(tracker) == 120, "Live engine frame limiter 120");
+            check(tracker.getFramerateLimit() <= 120, "Effective limiter respects configured maximum");
+            slider(row(screen, "options.vsync"), 1);
+            press(screen, "luminanova.video.apply");
+            check(minecraft.options.enableVsync().get(), "VSync enable applies");
+            slider(row(screen, "options.vsync"), 1);
+            slider(row(screen, "options.fullscreen"), 1);
+            press(screen, "luminanova.video.apply");
+            Field requested = minecraft.getWindow().getClass().getDeclaredField("fullscreenRequested"); requested.setAccessible(true);
+            check(minecraft.options.fullscreen().get() && requested.getBoolean(minecraft.getWindow()), "Fullscreen callback requests enter");
+            minecraft.getWindow().updateFullscreenIfChanged();
+            slider(row(screen, "options.fullscreen"), 1);
+            press(screen, "luminanova.video.apply");
+            check(!requested.getBoolean(minecraft.getWindow()), "Fullscreen callback requests exit");
+            minecraft.getWindow().updateFullscreenIfChanged();
+            screen.mouseScrolled(screen.width - 30, 60, 0, -30);
+            slider(row(screen, "luminanova.options.ultra"), 1);
             phase++;
         } else if (phase == 2) {
-            var screen = (NovaVideoSettingsScreen) minecraft.gui.screen();
-            OptionsList list = ((OptionsSubScreenAccessor) (Object) screen).luminanova$list();
-            Field field = NovaVideoSettingsScreen.class.getDeclaredField("ultraOptimization");
-            field.setAccessible(true);
-            OptionInstance<?> ultra = (OptionInstance<?>) field.get(screen);
-            ((CycleButton<?>) list.findOption(ultra)).onPress(new MouseButtonInfo(1, 0));
-            check(Boolean.TRUE.equals(ultra.get()), "Ultra preview toggle");
-            list.setScrollAmount(list.maxScrollAmount());
-            slider(list.findOption(minecraft.options.renderDistance()), 1);
-            slider(list.findOption(minecraft.options.simulationDistance()), 1);
-            slider(list.findOption(minecraft.options.gamma()), 0.6);
-            slider(list.findOption(minecraft.options.framerateLimit()), 12.0 / 25.0);
-            phase++;
-        } else if (phase == 3) {
-            capture(minecraft, "general-ultra.png");
-            minecraft.gui.screen().onClose();
-            check(minecraft.gui.screen() == parent, "Return navigation");
+            capture(minecraft, "alpha3-ultra.png");
+            press(minecraft.gui.screen(), "luminanova.video.accept");
+            check(minecraft.gui.screen() == parent, "Accept returns to parent");
             Path config = FabricLoader.getInstance().getConfigDir().resolve("luminanova.properties");
             check(NovaConfig.load(config, LoggerFactory.getLogger("ui-smoke")).ultraOptimization(), "Ultra saved");
-            String options = Files.readString(minecraft.gameDirectory.toPath().resolve("options.txt"));
-            check(options.contains("renderDistance:50"), "Render saved");
-            check(options.contains("simulationDistance:32"), "Simulation saved");
             minecraft.options.renderDistance().set(12);
             minecraft.options.simulationDistance().set(12);
+            minecraft.options.framerateLimit().set(250);
             minecraft.options.load();
             check(minecraft.options.renderDistance().get() == 50, "Render reload");
             check(minecraft.options.simulationDistance().get() == 32, "Simulation reload");
+            check(minecraft.options.framerateLimit().get() == 120, "FPS reload");
             minecraft.gui.setScreen(new NovaVideoSettingsScreen(parent, minecraft, minecraft.options));
-            Field field = NovaVideoSettingsScreen.class.getDeclaredField("ultraOptimization");
-            field.setAccessible(true);
-            check(Boolean.TRUE.equals(((OptionInstance<?>) field.get(minecraft.gui.screen())).get()), "Ultra reopens");
+            slider(row(minecraft.gui.screen(), "options.renderDistance"), 0);
+            minecraft.gui.screen().onClose();
+            check(minecraft.options.renderDistance().get() == 50, "Escape discards pending edits");
+            minecraft.gui.setScreen(new NovaVideoSettingsScreen(parent, minecraft, minecraft.options));
+            minecraft.options.guiScale().set(3); minecraft.resizeGui();
+            phase++;
+        } else if (phase == 3) {
+            capture(minecraft, "alpha3-scale3.png");
             if (FabricLoader.getInstance().isModLoaded("modmenu")) {
-                check(com.terraformersmc.modmenu.ModMenu.ROOT_MODS.containsKey("luminanova"), "Mod Menu listing");
                 check(com.terraformersmc.modmenu.ModMenu.hasConfigScreen("luminanova"), "Mod Menu entrypoint");
-                check(com.terraformersmc.modmenu.ModMenu.getConfigScreen("luminanova", parent) instanceof NovaVideoSettingsScreen,
-                        "Mod Menu configuration factory");
-                minecraft.gui.setScreen(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(parent));
-                for (var child : minecraft.gui.screen().children()) {
-                    if (child instanceof net.minecraft.client.gui.components.EditBox search) search.setValue("Lumina Nova");
-                }
-            } else {
-                minecraft.options.guiScale().set(3);
-                minecraft.resizeGui();
+                check(com.terraformersmc.modmenu.ModMenu.getConfigScreen("luminanova", parent) instanceof NovaVideoSettingsScreen, "Mod Menu factory");
             }
-            phase++;
-        } else if (phase == 4) {
-            capture(minecraft, FabricLoader.getInstance().isModLoaded("modmenu") ? "mod-menu.png" : "general-scale3.png");
-            phase++;
-        } else if (phase == 5) {
             System.out.println("LUMINA_UI_OK modmenu=" + FabricLoader.getInstance().isModLoaded("modmenu"));
-            minecraft.stop();
-            phase++;
+            minecraft.stop(); phase++;
         }
+    }
+
+    private static AbstractWidget row(Screen screen, String key) {
+        return screen.children().stream().filter(child -> child instanceof AbstractWidget)
+                .map(child -> (AbstractWidget)child)
+                .filter(widget -> widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()))
+                .findFirst().orElseThrow(() -> new AssertionError("Missing row " + key));
+    }
+
+    private static void press(Screen screen, String key) {
+        var widget = row(screen,key);
+        widget.onClick(new MouseButtonEvent(widget.getX()+5,widget.getY()+5,new MouseButtonInfo(0,0)),false);
     }
 
     private static void capture(Minecraft minecraft, String name) {

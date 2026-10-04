@@ -35,11 +35,16 @@ original y el cálculo de reemplazo. Esta evidencia no sustituye pruebas visuale
 fotogramas, compatibilidad con otros mods ni sesiones prolongadas. La candidata permanece opt-in
 hasta completar esas validaciones.
 
-## Interfaz de 0.0.2-alpha
+## Interfaz de 0.0.3-alpha
 
-`NovaVideoSettingsScreen` hereda la pantalla de vídeo del juego para conservar las rutas de
-pantalla completa y los controles de Minecraft. La pestaña General reutiliza `OptionInstance`
-y `OptionsList`, incluida su aplicación de valores pendientes y navegación por teclado.
+`NovaVideoSettingsScreen` usa una pantalla propia con panel lateral y filas de ajustes.
+Cada fila mantiene un valor pendiente separado de la `OptionInstance` real. Aplicar y Aceptar
+invocan `OptionInstance.set`, conservando los callbacks del motor; Escape descarta lo pendiente.
+El callback de FPS actualiza `FramerateLimitTracker`, VSync invalida la configuración de la
+superficie, y `Options.save` persiste los valores y envía las preferencias al servidor.
+Pantalla completa se aplica al final porque puede redimensionar la interfaz; la resolución usa
+los modos del monitor y `Window.changeFullscreenVideoMode`. Las filas conservan su estado al
+redimensionar, admiten ratón, teclado y desplazamiento con rueda.
 El mixin de `Gui.setScreen` sustituye únicamente instancias de la clase vanilla exacta;
 no redirige subclases de otros mods. Mod Menu registra un factory opcional para la misma pantalla.
 La dependencia de Mod Menu es `compileOnly`; solo se añade al cliente de desarrollo con
