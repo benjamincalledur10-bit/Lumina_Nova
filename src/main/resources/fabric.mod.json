@@ -3,6 +3,7 @@
   "id": "luminanova",
   "version": "${version}",
   "name": "Lumina Nova",
+  "icon": "assets/luminanova/icon.png",
   "description": "Experimental client performance research for Minecraft Java 26.3.",
   "authors": ["benjamincalledur10-bit"],
   "contact": {
@@ -12,8 +13,10 @@
   "environment": "client",
   "mixins": ["luminanova.client.mixins.json"],
   "entrypoints": {
-    "client": ["io.github.benjamincalledur10.luminanova.LuminaNovaClient"]
+    "client": ["io.github.benjamincalledur10.luminanova.LuminaNovaClient"],
+    "modmenu": ["io.github.benjamincalledur10.luminanova.compat.NovaModMenuIntegration"]
   },
+  "suggests": { "modmenu": ">=21.0.0" },
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "=26.3",

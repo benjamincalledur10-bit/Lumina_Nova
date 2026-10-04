@@ -47,4 +47,26 @@ class NovaConfigTest {
         assertEquals(new NovaConfig(false, false), load(path));
         assertTrue(Files.isDirectory(path));
     }
+
+    @Test
+    void savesPreviewPreferenceAndPreservesOtherPropertyValues() throws Exception {
+        Path path = directory.resolve("nova.properties");
+        Files.writeString(path, "enabled=false\nfast_frustum=true\ncustom_key=valor único\n");
+        assertTrue(NovaConfig.saveUltraOptimization(path, true, LoggerFactory.getLogger("config-test")));
+        assertEquals(new NovaConfig(false, true, true), load(path));
+        java.util.Properties properties = new java.util.Properties();
+        try (var reader = Files.newBufferedReader(path)) { properties.load(reader); }
+        assertEquals("valor único", properties.getProperty("custom_key"));
+        assertTrue(NovaConfig.saveUltraOptimization(path, false, LoggerFactory.getLogger("config-test")));
+        assertFalse(load(path).ultraOptimization());
+    }
+
+    @Test
+    void previewSaveRefusesInvalidConfigurationWithoutChangingIt() throws Exception {
+        Path path = directory.resolve("nova.properties");
+        String invalid = "enabled=true\nfast_frustum=oops\nultra_optimization=false\n";
+        Files.writeString(path, invalid);
+        assertFalse(NovaConfig.saveUltraOptimization(path, true, LoggerFactory.getLogger("config-test")));
+        assertEquals(invalid, Files.readString(path));
+    }
 }

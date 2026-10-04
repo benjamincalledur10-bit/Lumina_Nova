@@ -5,7 +5,7 @@
   "name": "Lumina Nova test harness",
   "environment": "client",
   "entrypoints": {
-    "client": ["io.github.benjamincalledur10.luminanova.test.FrustumSmoke"]
+    "client": ["io.github.benjamincalledur10.luminanova.test.FrustumSmoke", "io.github.benjamincalledur10.luminanova.test.UiSmoke"]
   },
   "depends": { "luminanova": "*" }
 }

@@ -35,6 +35,26 @@ original y el cálculo de reemplazo. Esta evidencia no sustituye pruebas visuale
 fotogramas, compatibilidad con otros mods ni sesiones prolongadas. La candidata permanece opt-in
 hasta completar esas validaciones.
 
+## Interfaz de 0.0.2-alpha
+
+`NovaVideoSettingsScreen` hereda la pantalla de vídeo del juego para conservar las rutas de
+pantalla completa y los controles de Minecraft. La pestaña General reutiliza `OptionInstance`
+y `OptionsList`, incluida su aplicación de valores pendientes y navegación por teclado.
+El mixin de `Gui.setScreen` sustituye únicamente instancias de la clase vanilla exacta;
+no redirige subclases de otros mods. Mod Menu registra un factory opcional para la misma pantalla.
+La dependencia de Mod Menu es `compileOnly`; solo se añade al cliente de desarrollo con
+`-PwithModMenu=true`. No se incluye en el JAR ni es necesaria para arrancar.
+
+Los rangos de `Options` se modifican antes de cargar `options.txt`, preservando sus callbacks y
+codecs: renderizado 2–50 y simulación 5–32. Dos mixins, registrados solo en el entorno cliente,
+amplían el clamp de `ChunkMap` y el radio del tracker de tickets de `DistanceManager` a 50 para
+el servidor integrado. No cambian servidores remotos ni el radio de spawn natural.
+
+Ultra guarda únicamente una preferencia. El frustum experimental conserva su interruptor
+independiente y no se activa con Ultra. Guardar la preferencia vuelve a leer las propiedades,
+conserva claves ajenas y usa un archivo temporal con reemplazo atómico cuando el sistema lo admite;
+un archivo inválido no se sobrescribe. La carga al iniciar sigue siendo conservadora.
+
 ## Etapas previstas, todavía no implementadas
 
 - Diagnóstico: captura acotada en memoria, sin escritura por fotograma, exportación fuera de la medición.

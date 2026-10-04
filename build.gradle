@@ -5,6 +5,13 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+repositories {
+    maven {
+        url = 'https://maven.terraformersmc.com/releases/'
+        content { includeGroup 'com.terraformersmc' }
+    }
+}
+
 loom {
     splitEnvironmentSourceSets()
     mods {
@@ -19,6 +26,10 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    compileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+    if (providers.gradleProperty('withModMenu').getOrElse('false').toBoolean()) {
+        runtimeOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+    }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
 }
@@ -50,6 +61,12 @@ loom {
             vmArg "-Dluminanova.smoke.fast=${providers.gradleProperty('fastFrustum').getOrElse('true')}"
             vmArg "-Dluminanova.smoke.enabled=${providers.gradleProperty('novaEnabled').getOrElse('true')}"
         }
+        uiSmoke {
+            client()
+            source sourceSets.testmod
+            runDir 'run-ui-smoke'
+            vmArg '-Dluminanova.uiSmoke=true'
+        }
     }
 }
 
@@ -62,6 +79,18 @@ tasks.register('prepareFrustumSmoke') {
     }
 }
 tasks.named('runFrustumSmoke') { dependsOn 'prepareFrustumSmoke' }
+
+tasks.register('prepareUiSmoke') {
+    doLast {
+        def runDirectory = file('run-ui-smoke')
+        runDirectory.mkdirs()
+        file('run-ui-smoke/options.txt').text = 'onboardAccessibility:false\nguiScale:2\nlang:es_es\n'
+        def config = file('run-ui-smoke/config/luminanova.properties')
+        config.parentFile.mkdirs()
+        config.text = 'enabled=true\nfast_frustum=true\nultra_optimization=false\n'
+    }
+}
+tasks.named('runUiSmoke') { dependsOn 'prepareUiSmoke' }
 
 dependencies {
     benchmarkImplementation 'org.openjdk.jmh:jmh-core:1.37'
