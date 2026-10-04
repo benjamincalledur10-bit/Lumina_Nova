@@ -1,6 +1,8 @@
 # Protocolo de rendimiento
 
-Este documento define pruebas futuras. Todavía no hay capturas ni resultados.
+Este documento define las pruebas dentro del juego, todavía pendientes: no hay capturas de
+fotogramas ni resultados de FPS. La primera candidata tiene un benchmark sintético de CPU y
+pruebas diferenciales, documentados en [los resultados de la alpha](ALPHA_0.0.1_RESULTS.md).
 
 ## Condiciones controladas
 

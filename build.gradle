@@ -19,6 +19,63 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
+}
+
+sourceSets {
+    test {
+        compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+    }
+    benchmark {
+        compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+    }
+    testmod {
+        compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+        runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+    }
+}
+
+loom {
+    mods {
+        luminanova_test { sourceSet sourceSets.testmod }
+    }
+    runs {
+        frustumSmoke {
+            client()
+            source sourceSets.testmod
+            runDir 'run-smoke'
+            vmArg "-Dluminanova.smoke.fast=${providers.gradleProperty('fastFrustum').getOrElse('true')}"
+            vmArg "-Dluminanova.smoke.enabled=${providers.gradleProperty('novaEnabled').getOrElse('true')}"
+        }
+    }
+}
+
+tasks.register('prepareFrustumSmoke') {
+    doLast {
+        def config = file('run-smoke/config/luminanova.properties')
+        config.parentFile.mkdirs()
+        config.text = "enabled=${providers.gradleProperty('novaEnabled').getOrElse('true')}\n" +
+                "fast_frustum=${providers.gradleProperty('fastFrustum').getOrElse('true')}\n"
+    }
+}
+tasks.named('runFrustumSmoke') { dependsOn 'prepareFrustumSmoke' }
+
+dependencies {
+    benchmarkImplementation 'org.openjdk.jmh:jmh-core:1.37'
+    benchmarkAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.37'
+}
+
+test { useJUnitPlatform() }
+
+tasks.register('frustumBenchmark', JavaExec) {
+    dependsOn benchmarkClasses
+    classpath = sourceSets.benchmark.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+    args 'FrustumBenchmark', '-rf', 'json', '-rff', 'build/frustum-benchmark.json'
 }
 
 processResources {

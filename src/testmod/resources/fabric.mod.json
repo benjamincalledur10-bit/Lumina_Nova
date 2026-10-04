@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "luminanova_test",
+  "version": "1.0.0",
+  "name": "Lumina Nova test harness",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["io.github.benjamincalledur10.luminanova.test.FrustumSmoke"]
+  },
+  "depends": { "luminanova": "*" }
+}

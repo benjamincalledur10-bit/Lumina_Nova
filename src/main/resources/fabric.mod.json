@@ -10,6 +10,7 @@
     "issues": "https://github.com/benjamincalledur10-bit/Lumina_Nova/issues"
   },
   "environment": "client",
+  "mixins": ["luminanova.client.mixins.json"],
   "entrypoints": {
     "client": ["io.github.benjamincalledur10.luminanova.LuminaNovaClient"]
   },
