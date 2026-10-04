@@ -67,7 +67,8 @@ La prueba de arranque usa un mod auxiliar que compara la clase transformada con 
 y cierra el cliente automáticamente. No valida imágenes ni una sesión de juego. El mod auxiliar,
 JUnit y JMH no forman parte del JAR instalable. El benchmark sintético compara el método original
 con el cálculo de reemplazo; no mide FPS ni el coste completo de la integración con Fabric.
-Los datos de JMH se guardan en `build/frustum-benchmark.json`.
+Los datos de JMH se guardan en `build/frustum-benchmark.json`. Consulta los
+[resultados y límites de esta prerelease](docs/ALPHA_0.0.1_RESULTS.md).
 
 Referencias: [Fabric para 26.3](https://fabricmc.net/2026/09/15/263.html),
 [proyecto de ejemplo oficial](https://github.com/FabricMC/fabric-example-mod/tree/26.3).

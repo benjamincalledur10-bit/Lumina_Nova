@@ -1,5 +1,7 @@
 # Evidencia experimental de 0.0.1-alpha.1
 
+Código evaluado: commit `4541e24` en `luminanovadev`.
+
 Fecha: 2026-10-04. Plataforma objetivo: Minecraft 26.3, Fabric Loader 0.19.5,
 Fabric API 0.161.0+26.3; compilación con Loom 1.17.21 y Gradle 9.6.0.
 
