@@ -1,8 +1,8 @@
 # Lumina Nova
 
 Mod experimental de optimización para **Minecraft Java 26.3**, exclusivamente de cliente con Fabric.
-Versión experimental: `0.0.3-alpha`. Incluye la pestaña General de ajustes de vídeo, integración
-opcional con Mod Menu, un logo propio y la optimización experimental del frustum de la alpha anterior.
+Versión experimental: `0.0.4-alpha`. Incluye General y Calidad, búsqueda de opciones, integración opcional con Mod Menu
+y el menú compartido de Sodium/Iris, un logo propio y el frustum experimental anterior.
 **No hay una mejora de FPS validada** ni evidencia de superioridad sobre Sodium. Solo admite 26.3.
 
 ## Ajustes de vídeo
@@ -11,7 +11,7 @@ Abre **Opciones → Ajustes de vídeo**. Con Mod Menu instalado, Lumina Nova apa
 y su botón de configuración abre la misma pantalla. Mod Menu 21.0.0 para 26.3 es opcional.
 
 - Renderizado: 2–50 chunks; simulación: 5–32 chunks.
-- Brillo, pantalla completa y pantalla completa exclusiva.
+- Brillo, tamaño de interfaz, pantalla completa y pantalla completa exclusiva.
 - Resolución de pantalla completa, con los modos disponibles del monitor.
 - VSync y FPS máximos, de 10 a 250 en pasos de 10, más Sin límite al extremo del slider.
   Por ejemplo, 120 actualiza el limitador real del juego a 120 al pulsar Aplicar/Aceptar.
@@ -34,6 +34,28 @@ En multijugador, el servidor sigue controlando las distancias efectivas de carga
 Subir las distancias aumenta el trabajo y la memoria necesarios; no es una optimización de FPS.
 El despliegue de terreno y sesiones largas a 50 chunks aún requiere pruebas de estabilidad.
 
+## Calidad e integración opcional
+
+Calidad ofrece transparencia mejorada, nubes y su distancia, radio del clima, hojas,
+partículas, iluminación suave, mezcla de biomas, distancia y sombras de entidades,
+viñeta, transición de chunks, mipmaps, filtrado de texturas y anisotropía.
+Estos controles aplican las opciones reales de Minecraft; apagar Nubes elimina las nubes del mundo.
+Los cambios de mipmaps, filtrado y anisotropía recargan los recursos de texturas.
+
+También ofrece interpolación de texels, ocultación de fluidos, forma de fluidos y ordenación
+de entidades. Sin Sodium, las políticas propias se guardan en
+`config/luminanova-quality.properties`: sampler Nearest/Linear, eliminación de la cara superior
+oculta de fluidos en bloques anegados, ajuste visual de altura junto a bloques anegados y
+ordenación por el punto más cercano de la caja de entidades. Los valores iniciales conservan
+el comportamiento vanilla. Son cambios visuales, no una mejora de FPS medida.
+
+Con **Sodium 0.9.2 para 26.3** instalado, Lumina registra General y Calidad dentro de su
+menú nativo compartido. **Iris 1.11.7** conserva su sección y opciones en esa misma interfaz.
+Las últimas cuatro opciones usan entonces la configuración real de Sodium y sus algoritmos;
+los mixins gráficos propios de Lumina se desactivan para evitar competir con ese renderizador.
+Iris requiere Sodium. Ambos son opcionales para Lumina: también funciona con solo Fabric API.
+No se incluyen esos mods en el JAR.
+
 ## Desarrollo
 
 - `main`: base estable y cambios validados.
@@ -49,11 +71,12 @@ El wrapper comprueba el SHA-256 de la distribución. No hay versiones dinámicas
 ./gradlew build
 ./gradlew runClient
 ./gradlew runClient -PwithModMenu=true
+./gradlew runClient -PwithIris=true
 ```
 
 En macOS, si ya tienes JDK 25 instalado: `export JAVA_HOME=$(/usr/libexec/java_home -v 25)`.
 La primera compilación descarga Gradle, Minecraft y sus dependencias.
-El JAR instalable queda en `build/libs/lumina-nova-0.0.3-alpha.jar`;
+El JAR instalable queda en `build/libs/lumina-nova-0.0.4-alpha.jar`;
 el archivo `-sources.jar` contiene código fuente y no se instala como mod.
 Para probarlo, usa una instalación separada de Minecraft 26.3 con Fabric Loader y Fabric API.
 
@@ -96,6 +119,8 @@ Consulta [el protocolo de pruebas](docs/BENCHMARKS.md) y [las decisiones de arqu
 ./gradlew frustumBenchmark
 ./gradlew runUiSmoke
 ./gradlew runUiSmoke -PwithModMenu=true
+./gradlew runQualityWorld
+./gradlew runCompatSmoke -PwithIris=true
 ```
 
 La prueba de arranque usa un mod auxiliar que compara la clase transformada con el método original
@@ -107,7 +132,7 @@ Los datos de JMH se guardan en `build/frustum-benchmark.json`. Consulta los
 La prueba de interfaz comprueba navegación, guardado y recarga de ajustes, rangos del servidor
 integrado e integración registrada en Mod Menu, y captura el framebuffer del juego para revisar
 la presentación. Usa `run-ui-smoke/`, una instalación de prueba separada que se reinicia cada vez.
-Consulta [la validación de 0.0.3-alpha](docs/ALPHA_0.0.2_VALIDATION.md) y [el logo](docs/branding/README.md).
+Consulta [la validación de 0.0.4-alpha](docs/ALPHA_0.0.4_VALIDATION.md) y [el logo](docs/branding/README.md).
 
 Referencias: [Fabric para 26.3](https://fabricmc.net/2026/09/15/263.html),
 [proyecto de ejemplo oficial](https://github.com/FabricMC/fabric-example-mod/tree/26.3).

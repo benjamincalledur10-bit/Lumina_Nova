@@ -9,6 +9,6 @@ import net.minecraft.client.Minecraft;
 public final class NovaModMenuIntegration implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> new NovaVideoSettingsScreen(parent, Minecraft.getInstance(), Minecraft.getInstance().options);
+        return NovaScreens::create;
     }
 }

@@ -1,6 +1,8 @@
 package io.github.benjamincalledur10.luminanova.test;
 
 import io.github.benjamincalledur10.luminanova.config.NovaConfig;
+import io.github.benjamincalledur10.luminanova.config.NovaQualityConfig;
+import io.github.benjamincalledur10.luminanova.config.NovaQualitySettings;
 import io.github.benjamincalledur10.luminanova.gui.NovaVideoSettingsScreen;
 import io.github.benjamincalledur10.luminanova.mixin.OptionsSubScreenAccessor;
 import java.lang.reflect.Field;
@@ -56,7 +58,7 @@ public final class UiSmoke implements ClientModInitializer {
             check(minecraft.gui.screen() instanceof NovaVideoSettingsScreen, "Video routing");
             phase++;
         } else if (phase == 1) {
-            capture(minecraft, "alpha3-general.png");
+            capture(minecraft,"alpha4-general.png");
             var screen = (NovaVideoSettingsScreen) minecraft.gui.screen();
             int original = minecraft.options.renderDistance().get();
             slider(row(screen, "options.renderDistance"), 1);
@@ -93,8 +95,55 @@ public final class UiSmoke implements ClientModInitializer {
             slider(row(screen, "luminanova.options.ultra"), 1);
             phase++;
         } else if (phase == 2) {
-            capture(minecraft, "alpha3-ultra.png");
-            press(minecraft.gui.screen(), "luminanova.video.accept");
+            var screen=minecraft.gui.screen();
+            press(screen,"luminanova.video.quality");
+            check(row(screen,"options.renderClouds").visible,"Quality page shows cloud control");
+            slider(row(screen,"options.improvedTransparency"),1);
+            slider(row(screen,"options.renderClouds"),0); // Fancy -> Off.
+            check(minecraft.options.cloudStatus().get()!=net.minecraft.client.CloudStatus.OFF,"Clouds staged");
+            // Configure the range before disabling it through the pending cloud policy.
+            press(screen,"luminanova.video.apply");
+            check(minecraft.options.cloudStatus().get()==net.minecraft.client.CloudStatus.OFF,"Clouds off applies");
+            slider(row(screen,"options.renderClouds"),0); // Off -> Fast, enables distance.
+            slider(row(screen,"options.renderCloudsDistance"),30.0/126.0);
+            slider(row(screen,"options.weatherRadius"),2.0/7.0);
+            slider(row(screen,"options.cutoutLeaves"),0);
+            slider(row(screen,"options.particles"),1);
+            slider(row(screen,"options.ao"),0);
+            slider(row(screen,"options.biomeBlendRadius"),1.0/7.0);
+            slider(row(screen,"options.entityDistanceScaling"),1.0/18.0);
+            slider(row(screen,"options.entityShadows"),0);
+            slider(row(screen,"options.vignette"),0);
+            slider(row(screen,"options.chunkFade"),15.0/40.0);
+            slider(row(screen,"options.mipmapLevels"),0.5);
+            slider(row(screen,"options.textureFiltering"),1); // None -> RGSS.
+            slider(row(screen,"options.textureFiltering"),1); // RGSS -> Anisotropic.
+            slider(row(screen,"options.maxAnisotropy"),1);
+            slider(row(screen,"luminanova.quality.texel_interpolation"),0);
+            slider(row(screen,"luminanova.quality.fluid_culling"),1);
+            slider(row(screen,"luminanova.quality.fluid_shaping"),1);
+            slider(row(screen,"luminanova.quality.entity_sorting"),1);
+            press(screen,"luminanova.video.apply");
+            check(minecraft.options.improvedTransparency().get(),"Improved transparency applies");
+            check(minecraft.options.cloudRange().get()==32,"Cloud range");
+            check(minecraft.options.weatherRadius().get()==5,"Weather radius");
+            check(!minecraft.options.cutoutLeaves().get(),"Opaque leaves");
+            check(minecraft.options.particles().get()==net.minecraft.server.level.ParticleStatus.DECREASED,"Particles");
+            check(!minecraft.options.ambientOcclusion().get(),"Smooth lighting off");
+            check(minecraft.options.biomeBlendRadius().get()==1,"Biome blend 3x3");
+            check(minecraft.options.entityDistanceScaling().get()==0.75,"Entity distance 75%");
+            check(!minecraft.options.entityShadows().get(),"Entity shadows off");
+            check(!minecraft.options.vignette().get(),"Vignette off");
+            check(minecraft.options.chunkSectionFadeInTime().get()==0.75,"Chunk fade");
+            check(minecraft.options.mipmapLevels().get()==2,"Mipmap levels");
+            check(minecraft.options.textureFiltering().get()==net.minecraft.client.TextureFilteringMethod.ANISOTROPIC,"Texture filter");
+            check(minecraft.options.maxAnisotropyBit().get()==3,"Anisotropy 8x");
+            check(NovaQualitySettings.current().equals(new NovaQualityConfig(false,true,true,true)),"Quality policies active");
+            check(NovaQualityConfig.load(NovaQualitySettings.PATH,LoggerFactory.getLogger("quality-smoke")).equals(NovaQualitySettings.current()),"Quality policies persisted");
+            // Leave clouds disabled as the user's concrete example.
+            slider(row(screen,"options.renderClouds"),1); // Fast -> Fancy.
+            slider(row(screen,"options.renderClouds"),1); // Fancy -> Off.
+            press(screen,"luminanova.video.accept");
             check(minecraft.gui.screen() == parent, "Accept returns to parent");
             Path config = FabricLoader.getInstance().getConfigDir().resolve("luminanova.properties");
             check(NovaConfig.load(config, LoggerFactory.getLogger("ui-smoke")).ultraOptimization(), "Ultra saved");
@@ -105,21 +154,41 @@ public final class UiSmoke implements ClientModInitializer {
             check(minecraft.options.renderDistance().get() == 50, "Render reload");
             check(minecraft.options.simulationDistance().get() == 32, "Simulation reload");
             check(minecraft.options.framerateLimit().get() == 120, "FPS reload");
+            check(minecraft.options.cloudStatus().get()==net.minecraft.client.CloudStatus.OFF,"Clouds off reload");
+            check(minecraft.options.mipmapLevels().get()==2,"Mipmaps reload");
             minecraft.gui.setScreen(new NovaVideoSettingsScreen(parent, minecraft, minecraft.options));
             slider(row(minecraft.gui.screen(), "options.renderDistance"), 0);
             minecraft.gui.screen().onClose();
             check(minecraft.options.renderDistance().get() == 50, "Escape discards pending edits");
             minecraft.gui.setScreen(new NovaVideoSettingsScreen(parent, minecraft, minecraft.options));
-            minecraft.options.guiScale().set(3); minecraft.resizeGui();
+            var scaleRow=row(minecraft.gui.screen(),"options.guiScale");
+            int guiMaximum=((OptionInstance.ClampingLazyMaxIntRange)minecraft.options.guiScale().values()).maxInclusive();
+            slider(scaleRow,3.0/guiMaximum);
+            press(minecraft.gui.screen(),"luminanova.video.apply");
+            check(minecraft.options.guiScale().get()==3,"GUI scale applies through native callback");
             phase++;
         } else if (phase == 3) {
-            capture(minecraft, "alpha3-scale3.png");
+            capture(minecraft, "alpha4-scale3.png");
             if (FabricLoader.getInstance().isModLoaded("modmenu")) {
                 check(com.terraformersmc.modmenu.ModMenu.hasConfigScreen("luminanova"), "Mod Menu entrypoint");
                 check(com.terraformersmc.modmenu.ModMenu.getConfigScreen("luminanova", parent) instanceof NovaVideoSettingsScreen, "Mod Menu factory");
             }
-            System.out.println("LUMINA_UI_OK modmenu=" + FabricLoader.getInstance().isModLoaded("modmenu"));
-            minecraft.stop(); phase++;
+            press(minecraft.gui.screen(),"luminanova.video.quality");
+            for (var child:minecraft.gui.screen().children()) if (child instanceof net.minecraft.client.gui.components.EditBox search) {
+                search.setValue("nubes");
+                check(row(minecraft.gui.screen(),"options.renderClouds").visible,"Search matches quality");
+                check(!row(minecraft.gui.screen(),"options.renderDistance").visible,"Search hides unrelated general option");
+                search.setValue("");
+            }
+            phase++;
+        } else if (phase==4) {
+            capture(minecraft,"alpha4-quality-top.png");
+            minecraft.gui.screen().mouseScrolled(minecraft.gui.screen().width-20,60,0,-100);
+            phase++;
+        } else if (phase==5) {
+            capture(minecraft,"alpha4-quality-bottom.png");
+            System.out.println("LUMINA_UI_OK modmenu="+FabricLoader.getInstance().isModLoaded("modmenu"));
+            minecraft.stop();phase++;
         }
     }
 
@@ -141,7 +210,8 @@ public final class UiSmoke implements ClientModInitializer {
     }
 
     private static void slider(AbstractWidget widget, double value) {
-        widget.onClick(new MouseButtonEvent(widget.getX() + 4 + value * (widget.getWidth() - 8),
+        int controlWidth=Math.min(140,widget.getWidth()/2);
+        widget.onClick(new MouseButtonEvent(widget.getRight()-controlWidth+4+value*(controlWidth-8),
                 widget.getY() + 10, new MouseButtonInfo(1, 0)), false);
     }
 

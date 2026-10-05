@@ -2,6 +2,19 @@
   "required": true,
   "package": "io.github.benjamincalledur10.luminanova.mixin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["FrustumMixin", "OptionsDistanceMixin", "VideoScreenRoutingMixin", "OptionsSubScreenAccessor", "IntegratedChunkDistanceMixin", "PlayerTicketDistanceMixin"],
-  "injectors": { "defaultRequire": 1 }
+  "client": [
+    "FrustumMixin",
+    "OptionsDistanceMixin",
+    "VideoScreenRoutingMixin",
+    "OptionsSubScreenAccessor",
+    "IntegratedChunkDistanceMixin",
+    "PlayerTicketDistanceMixin",
+    "FluidQualityMixin",
+    "TerrainSamplerMixin",
+    "EntitySortMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "plugin": "io.github.benjamincalledur10.luminanova.mixin.NovaMixinPlugin"
 }

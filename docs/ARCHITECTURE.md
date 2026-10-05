@@ -9,7 +9,7 @@ copiar mixins de versiones anteriores sin inspeccionar las clases de 26.3.
 El punto de entrada carga configuración y anuncia el estado. El código de cliente
 vive en `src/client/java`; `fabric.mod.json` declara `environment: client`.
 Hay una optimización experimental de la prueba booleana de visibilidad, desactivada por defecto.
-No hay compatibilidad comprobada con Sodium, VulkanMod o Iris.
+La interfaz compartida se ha comprobado con Sodium 0.9.2 e Iris 1.11.7; no hay pruebas con shaderpacks ni VulkanMod.
 
 ## Primera candidata: prueba booleana del frustum
 
@@ -35,7 +35,7 @@ original y el cálculo de reemplazo. Esta evidencia no sustituye pruebas visuale
 fotogramas, compatibilidad con otros mods ni sesiones prolongadas. La candidata permanece opt-in
 hasta completar esas validaciones.
 
-## Interfaz de 0.0.3-alpha
+## Interfaz de 0.0.4-alpha
 
 `NovaVideoSettingsScreen` usa una pantalla propia con panel lateral y filas de ajustes.
 Cada fila mantiene un valor pendiente separado de la `OptionInstance` real. Aplicar y Aceptar
@@ -76,3 +76,20 @@ un archivo inválido no se sobrescribe. La carga al iniciar sigue siendo conserv
 Compilación y arranque correctos, una optimización con mejora repetible, ausencia de regresiones visuales
 en la matriz definida, sesiones largas y resultados con hardware, versiones y configuración completos.
 Compilar un JAR no satisface estos criterios. La versión del proyecto identifica el trabajo hacia la alpha.
+
+## Calidad y renderer opcional
+
+Las opciones nativas conservan OptionInstance y sus callbacks; los cambios de mipmaps,
+filtrado y anisotropía solicitan recarga de recursos. NovaQualitySettings publica un snapshot
+inmutable persistido atómicamente en luminanova-quality.properties. Un cambio de sampler
+invalida el sampler del terreno; los cambios de fluidos reconstruyen los chunks.
+TerrainSamplerMixin cambia los filtros de magnificación/minificación; FluidQualityMixin
+elimina superficies superiores ocultas por el bloque anegado y ajusta la altura visual
+en esquinas anegadas; EntitySortMixin ordena submits de entidades por distancia a su AABB.
+Estas políticas independientes no reproducen exactamente los algoritmos de Sodium.
+
+NovaMixinPlugin omite esos tres mixins al detectar Sodium. NovaSodiumIntegration registra
+páginas mediante ConfigEntryPoint y vincula las cuatro políticas a las opciones de su
+renderer. La dependencia es compileOnly: no se empaqueta y no se carga sin Sodium.
+NovaScreens elige el menú nativo compartido cuando está presente; Mod Menu usa ese factory.
+La entrada vanilla solo redirige la clase exacta, conservando pantallas de otros mods.

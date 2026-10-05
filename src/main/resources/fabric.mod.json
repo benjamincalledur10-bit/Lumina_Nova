@@ -5,18 +5,32 @@
   "name": "Lumina Nova",
   "icon": "assets/luminanova/icon.png",
   "description": "Experimental client performance research for Minecraft Java 26.3.",
-  "authors": ["benjamincalledur10-bit"],
+  "authors": [
+    "benjamincalledur10-bit"
+  ],
   "contact": {
     "sources": "https://github.com/benjamincalledur10-bit/Lumina_Nova",
     "issues": "https://github.com/benjamincalledur10-bit/Lumina_Nova/issues"
   },
   "environment": "client",
-  "mixins": ["luminanova.client.mixins.json"],
+  "mixins": [
+    "luminanova.client.mixins.json"
+  ],
   "entrypoints": {
-    "client": ["io.github.benjamincalledur10.luminanova.LuminaNovaClient"],
-    "modmenu": ["io.github.benjamincalledur10.luminanova.compat.NovaModMenuIntegration"]
+    "client": [
+      "io.github.benjamincalledur10.luminanova.LuminaNovaClient"
+    ],
+    "modmenu": [
+      "io.github.benjamincalledur10.luminanova.compat.NovaModMenuIntegration"
+    ],
+    "sodium:config_api_user": [
+      "io.github.benjamincalledur10.luminanova.compat.NovaSodiumIntegration"
+    ]
   },
-  "suggests": { "modmenu": ">=21.0.0" },
+  "suggests": {
+    "modmenu": ">=21.0.0",
+    "sodium": "0.9.x"
+  },
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "=26.3",

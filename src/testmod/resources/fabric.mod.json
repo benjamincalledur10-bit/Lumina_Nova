@@ -5,7 +5,16 @@
   "name": "Lumina Nova test harness",
   "environment": "client",
   "entrypoints": {
-    "client": ["io.github.benjamincalledur10.luminanova.test.FrustumSmoke", "io.github.benjamincalledur10.luminanova.test.UiSmoke"]
+    "client": [
+      "io.github.benjamincalledur10.luminanova.test.FrustumSmoke",
+      "io.github.benjamincalledur10.luminanova.test.UiSmoke",
+      "io.github.benjamincalledur10.luminanova.test.CompatSmoke"
+    ],
+    "fabric-client-gametest": [
+      "io.github.benjamincalledur10.luminanova.test.QualityWorldTest"
+    ]
   },
-  "depends": { "luminanova": "*" }
+  "depends": {
+    "luminanova": "*"
+  }
 }
