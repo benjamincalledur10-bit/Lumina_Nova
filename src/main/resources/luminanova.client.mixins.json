@@ -9,9 +9,11 @@
     "OptionsSubScreenAccessor",
     "IntegratedChunkDistanceMixin",
     "PlayerTicketDistanceMixin",
+    "ChunkTaskPriorityMixin",
     "FluidQualityMixin",
     "TerrainSamplerMixin",
-    "EntitySortMixin"
+    "EntitySortMixin",
+    "BlockEntityVisibilityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

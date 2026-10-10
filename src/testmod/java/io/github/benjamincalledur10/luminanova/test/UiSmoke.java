@@ -58,7 +58,7 @@ public final class UiSmoke implements ClientModInitializer {
             check(minecraft.gui.screen() instanceof NovaVideoSettingsScreen, "Video routing");
             phase++;
         } else if (phase == 1) {
-            capture(minecraft,"alpha4-general.png");
+            capture(minecraft,"alpha5-general.png");
             var screen = (NovaVideoSettingsScreen) minecraft.gui.screen();
             int original = minecraft.options.renderDistance().get();
             slider(row(screen, "options.renderDistance"), 1);
@@ -168,7 +168,7 @@ public final class UiSmoke implements ClientModInitializer {
             check(minecraft.options.guiScale().get()==3,"GUI scale applies through native callback");
             phase++;
         } else if (phase == 3) {
-            capture(minecraft, "alpha4-scale3.png");
+            capture(minecraft, "alpha5-scale3.png");
             if (FabricLoader.getInstance().isModLoaded("modmenu")) {
                 check(com.terraformersmc.modmenu.ModMenu.hasConfigScreen("luminanova"), "Mod Menu entrypoint");
                 check(com.terraformersmc.modmenu.ModMenu.getConfigScreen("luminanova", parent) instanceof NovaVideoSettingsScreen, "Mod Menu factory");
@@ -182,11 +182,20 @@ public final class UiSmoke implements ClientModInitializer {
             }
             phase++;
         } else if (phase==4) {
-            capture(minecraft,"alpha4-quality-top.png");
+            capture(minecraft,"alpha5-quality-top.png");
             minecraft.gui.screen().mouseScrolled(minecraft.gui.screen().width-20,60,0,-100);
             phase++;
         } else if (phase==5) {
-            capture(minecraft,"alpha4-quality-bottom.png");
+            capture(minecraft,"alpha5-quality-bottom.png");
+            press(minecraft.gui.screen(),"luminanova.video.optimization");
+            slider(row(minecraft.gui.screen(),"luminanova.options.block_entity_culling"),1);
+            press(minecraft.gui.screen(),"luminanova.video.apply");
+            check(io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.current().blockEntityCulling(),"Performance option live");
+            check(io.github.benjamincalledur10.luminanova.config.NovaPerformanceConfig.load(
+                    io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.PATH,LoggerFactory.getLogger("performance-smoke")).blockEntityCulling(),"Performance option persists");
+            phase++;
+        } else if (phase==6) {
+            capture(minecraft,"alpha5-optimization.png");
             System.out.println("LUMINA_UI_OK modmenu="+FabricLoader.getInstance().isModLoaded("modmenu"));
             minecraft.stop();phase++;
         }
@@ -220,6 +229,13 @@ public final class UiSmoke implements ClientModInitializer {
     }
 
     private static void verifyIntegratedServerLimits() throws Exception {
+        check(net.minecraft.server.level.ChunkTaskPriorityQueue.PRIORITY_LEVEL_COUNT>52,"Extended ticket priorities fit queue");
+        var queue=new net.minecraft.server.level.ChunkTaskPriorityQueue("lumina-priority-test");
+        var submit=queue.getClass().getDeclaredMethod("submit",Runnable.class,long.class,int.class);
+        var resort=queue.getClass().getDeclaredMethod("resortChunkTasks",int.class,net.minecraft.world.level.ChunkPos.class,int.class);
+        submit.setAccessible(true);resort.setAccessible(true);
+        submit.invoke(queue,(Runnable)() -> {},0L,40);
+        resort.invoke(queue,40,new net.minecraft.world.level.ChunkPos(0,0),52);
         var cap = Arrays.stream(ChunkMap.class.getDeclaredMethods())
                 .filter(method -> method.getName().contains("luminanova$localRenderLimit"))
                 .findFirst().orElseThrow();

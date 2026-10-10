@@ -4,6 +4,8 @@ import com.mojang.blaze3d.platform.MacosUtil;
 import com.mojang.blaze3d.platform.Monitor;
 import io.github.benjamincalledur10.luminanova.config.NovaConfig;
 import io.github.benjamincalledur10.luminanova.config.NovaQualityConfig;
+import io.github.benjamincalledur10.luminanova.config.NovaPerformanceConfig;
+import io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings;
 import io.github.benjamincalledur10.luminanova.config.NovaQualitySettings;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,12 +37,15 @@ import org.slf4j.LoggerFactory;
 
 /** General and Quality pages with staged native options and explicit render-policy controls. */
 public final class NovaVideoSettingsScreen extends Screen {
-    private static final int CYAN = 0xFF65EAFF;
+    private static final int ACCENT = 0xFF80E9CD;
+    private static final int ROW_HEIGHT = 24;
+    private static final int PAGE_HEADER = 28;
     private final Screen parent;
     private final Options options;
     private final List<Setting<?>> settings = new ArrayList<>();
     private final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("luminanova.properties");
     private final OptionInstance<Boolean> ultraOptimization;
+    private final OptionInstance<Boolean> blockEntityCulling;
     private final Monitor monitor;
     private final OptionInstance<Boolean> linearTexels, fluidCulling, alternativeFluids, enhancedEntities;
     private int buildingPage, activePage, group;
@@ -92,6 +97,10 @@ public final class NovaVideoSettingsScreen extends Screen {
         fluidCulling = policy("luminanova.quality.fluid_culling", quality.fluidCulling(), "default", "optimized");
         alternativeFluids = policy("luminanova.quality.fluid_shaping", quality.alternativeFluids(), "vanilla", "alternative");
         enhancedEntities = policy("luminanova.quality.entity_sorting", quality.enhancedEntities(), "default", "enhanced");
+        buildingPage = 2; group++;
+        blockEntityCulling = OptionInstance.createBoolean("luminanova.options.block_entity_culling",
+                NovaPerformanceSettings.current().blockEntityCulling());
+        toggle("luminanova.options.block_entity_culling", blockEntityCulling);
     }
 
     private void quality() {
@@ -138,23 +147,30 @@ public final class NovaVideoSettingsScreen extends Screen {
     }
 
     @Override protected void init() {
-        left = 10; right = width - 10; top = 34; bottom = height - 36;
-        sidebar = Math.min(180, Math.max(100, width * 3 / 10));
-        search = new EditBox(font,left+8,12,right-left-40,16,Component.translatable("luminanova.video.search"));
+        int panelWidth = Math.min(720, width - 24);
+        left = (width - panelWidth) / 2; right = left + panelWidth;
+        top = 40; bottom = height - 40;
+        sidebar = Math.min(148, Math.max(108, panelWidth / 4));
+        search = new EditBox(font,left+10,16,right-left-44,16,Component.translatable("luminanova.video.search"));
         search.setBordered(false);
         search.setHint(Component.translatable("luminanova.video.search"));
         search.setValue(query);
         search.setResponder(value -> { query=value; scroll=0; placeRows(); });
         addRenderableWidget(search);
-        addRenderableWidget(new FlatButton(right-24,8,24,22,Component.literal("×"),b -> onClose()));
-        var logo = ImageWidget.texture(16,16,Identifier.fromNamespaceAndPath("luminanova","logo-small.png"),28,28);
+        addRenderableWidget(new FlatButton(right-28,10,24,22,Component.literal("×"),b -> { search.setValue(""); search.setFocused(true); }));
+        // Texture widgets use source pixels directly: 28x28 prevents the old cropped logo.
+        var logo = ImageWidget.texture(28,28,Identifier.fromNamespaceAndPath("luminanova","logo-small.png"),28,28);
         logo.setX(left+6); logo.setY(top+6); addRenderableOnly(logo);
-        addRenderableWidget(new FlatButton(left,top+30,sidebar-6,24,Component.translatable("luminanova.video.general"),b -> selectPage(0)));
-        addRenderableWidget(new FlatButton(left,top+54,sidebar-6,24,Component.translatable("luminanova.video.quality"),b -> selectPage(1)));
+        for (int page = 0; page < 3; page++) {
+            final int selectedPage = page;
+            String key = switch (page) { case 0 -> "general"; case 1 -> "quality"; default -> "optimization"; };
+            addRenderableWidget(new FlatButton(left+4,top+42+page*26,sidebar-8,24,
+                    Component.translatable("luminanova.video."+key),b -> selectPage(selectedPage)));
+        }
         for (var setting : settings) addRenderableWidget(new Row(setting));
-        apply = addRenderableWidget(new FlatButton(right-174,height-27,84,22,
+        apply = addRenderableWidget(new FlatButton(right-180,bottom+10,86,22,
                 Component.translatable("luminanova.video.apply"),b -> applyChanges()));
-        addRenderableWidget(new FlatButton(right-84,height-27,84,22,
+        addRenderableWidget(new FlatButton(right-86,bottom+10,86,22,
                 Component.translatable("luminanova.video.accept"),b -> { if (applyChanges()) minecraft.gui.setScreen(parent); }));
         placeRows();
     }
@@ -187,16 +203,21 @@ public final class NovaVideoSettingsScreen extends Screen {
 
     private void placeRows() {
         var shown=shownSettings();
-        int y=top, previous=-1;
-        scroll=Math.max(0,Math.min(scroll,Math.max(0,contentHeight()-(bottom-top))));
+        int y=top+PAGE_HEADER, previous=-1;
+        scroll=Math.max(0,Math.min(scroll,Math.max(0,contentHeight()-(bottom-top-PAGE_HEADER))));
         for (var child : children()) if (child instanceof Row row) {
             row.visible=false;
             if (!shown.contains(row.setting)) continue;
             if (previous!=-1 && row.setting.group!=previous) y+=7;
             previous=row.setting.group;
-            row.setX(left+sidebar); row.setY(y-scroll); row.setWidth(right-row.getX()-10); y+=24;
-            row.visible=row.getY()>=top && row.getBottom()<=bottom;
+            row.setX(left+sidebar+12); row.setY(y-scroll); row.setWidth(right-row.getX()-14); y+=ROW_HEIGHT;
+            row.visible=row.getY()>=top+PAGE_HEADER && row.getBottom()<=bottom;
             row.active=row.setting.max>row.setting.min;
+            if (row.setting.option==blockEntityCulling) {
+                String owner=io.github.benjamincalledur10.luminanova.compat.NovaRenderCompatibility.blockEntityOwner();
+                row.active=owner.isEmpty();
+                if (!owner.isEmpty()) row.setTooltip(Tooltip.create(Component.translatable("luminanova.options.culling_owner",owner)));
+            }
             if (row.setting.option==options.maxAnisotropyBit()) row.active=pending(options.textureFiltering())==TextureFilteringMethod.ANISOTROPIC;
             if (row.setting.option==options.cloudRange()) row.active=pending(options.cloudStatus())!=CloudStatus.OFF;
         }
@@ -216,6 +237,11 @@ public final class NovaVideoSettingsScreen extends Screen {
         if (!quality.equals(NovaQualitySettings.current()) && !quality.save(NovaQualitySettings.PATH,LoggerFactory.getLogger("luminanova"))) {
             error=Component.translatable("luminanova.video.save_error").getString(); return false;
         }
+        var performance = new NovaPerformanceConfig((Boolean)pending(blockEntityCulling));
+        if (!performance.equals(NovaPerformanceSettings.current())
+                && !performance.save(NovaPerformanceSettings.PATH,LoggerFactory.getLogger("luminanova"))) {
+            error=Component.translatable("luminanova.video.save_error").getString(); return false;
+        }
         int oldMipmaps=options.mipmapLevels().get();
         int oldAnisotropy=options.maxAnisotropyBit().get();
         var oldFiltering=options.textureFiltering().get();
@@ -223,6 +249,7 @@ public final class NovaVideoSettingsScreen extends Screen {
         for (var setting : settings) if (setting.option != options.fullscreen()) setting.commit();
         for (var setting : settings) if (setting.option == options.fullscreen()) setting.commit();
         NovaQualitySettings.apply(quality);
+        NovaPerformanceSettings.apply(performance);
         if (oldMipmaps!=options.mipmapLevels().get() || oldAnisotropy!=options.maxAnisotropyBit().get()
                 || oldFiltering!=options.textureFiltering().get()) {
             minecraft.updateMaxMipLevel(options.mipmapLevels().get());
@@ -243,7 +270,7 @@ public final class NovaVideoSettingsScreen extends Screen {
         return super.keyPressed(event);
     }
 
-    private int maxScroll() { return Math.max(0, contentHeight()-(bottom-top)); }
+    private int maxScroll() { return Math.max(0, contentHeight()-(bottom-top-PAGE_HEADER)); }
 
     private void scrollTo(double y) {
         scroll = (int)Math.round(Math.max(0,Math.min(1,(y-top)/(bottom-top))) * maxScroll());
@@ -270,50 +297,60 @@ public final class NovaVideoSettingsScreen extends Screen {
 
     @Override public boolean mouseScrolled(double x, double y, double dx, double dy) {
         if (x >= left + sidebar && x <= right && y >= top && y <= bottom) {
-            scroll = Math.max(0, Math.min(Math.max(0, contentHeight() - (bottom - top)), scroll - (int)(dy * 28)));
+            scroll = Math.max(0, Math.min(Math.max(0, contentHeight() - (bottom - top - PAGE_HEADER)), scroll - (int)(dy * 28)));
             placeRows(); return true;
         }
         return super.mouseScrolled(x, y, dx, dy);
     }
 
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mouseX,int mouseY,float delta) {
-        g.fill(left,8,right,30,0xB8000000);
-        g.fill(left,top,left+sidebar-6,bottom,0xC0000000);
-        g.fill(left+sidebar,top,right,bottom,0xB0000000);
-        g.text(font,"Lumina Nova",left+25,top+10,0xFF80E9CD);
-        int selected=top+30+activePage*24;
-        g.fill(left,selected,left+3,selected+24,0xFF80E9CD);
+        g.fill(left,10,right,34,0xEE141A20);
+        g.outline(left,10,right-left,24,0xFF35434A);
+        g.fill(left,top,left+sidebar,bottom,0xE0141A20);
+        g.fill(left+sidebar+6,top,right,bottom,0xE0192128);
+        g.text(font,"Lumina Nova",left+38,top+16,ACCENT);
+        g.horizontalLine(left+8,left+sidebar-8,top+38,0xFF35434A);
+        String pageKey = query.isBlank() ? switch (activePage) {
+            case 0 -> "luminanova.video.general";
+            case 1 -> "luminanova.video.quality";
+            default -> "luminanova.video.optimization";
+        } : "luminanova.video.search_results";
+        g.text(font,Component.translatable(pageKey),left+sidebar+16,top+9,ACCENT);
+        g.horizontalLine(left+sidebar+12,right-12,top+24,0xFF35434A);
         if (maxScroll()>0) {
-            int track=bottom-top, handle=Math.max(16,track*track/contentHeight());
-            int pos=top+scroll*(track-handle)/maxScroll();
-            g.fill(right-7,top,right-1,bottom,0xFF59605E);
-            g.fill(right-6,pos,right-2,pos+handle,0xFFACB5B1);
+            int track=bottom-top-PAGE_HEADER, handle=Math.max(18,track*track/contentHeight());
+            int pos=top+PAGE_HEADER+scroll*(track-handle)/maxScroll();
+            g.fill(right-6,top+PAGE_HEADER,right-3,bottom-2,0xFF303D43);
+            g.fill(right-6,pos,right-3,pos+handle,0xFF80A69C);
         }
-        g.text(font,error.isEmpty()?"v"+version:error,left,height-20,error.isEmpty()?0xFF81948E:0xFFFF7777);
+        g.text(font,error.isEmpty()?"v"+version:error,left+4,bottom+17,error.isEmpty()?0xFF9BAFA9:0xFFFF7777);
         super.extractRenderState(g,mouseX,mouseY,delta);
-        if (shownSettings().isEmpty()) g.text(font,Component.translatable("luminanova.video.no_results"),left+sidebar+8,top+8,0xFF81948E);
+        if (shownSettings().isEmpty()) g.text(font,Component.translatable("luminanova.video.no_results"),left+sidebar+16,top+36,0xFF9BAFA9);
     }
 
     private final class FlatButton extends AbstractWidget {
         private final java.util.function.Consumer<FlatButton> press;
-        FlatButton(int x,int y,int width,int height,Component text,java.util.function.Consumer<FlatButton> press) { super(x,y,width,height,text); this.press=press; }
+        FlatButton(int x,int y,int w,int h,Component label,java.util.function.Consumer<FlatButton> press) { super(x,y,w,h,label);this.press=press; }
         @Override public void onClick(MouseButtonEvent event, boolean doubleClick) { if (active) press.accept(this); }
         @Override public boolean keyPressed(KeyEvent event) {
-            if (active && isFocused() && (event.key()==257 || event.key()==32)) { press.accept(this); return true; }
+            if (active && (event.key()==257 || event.key()==32)) { press.accept(this); return true; }
             return false;
         }
         @Override protected void updateWidgetNarration(NarrationElementOutput output) { defaultButtonNarrationText(output); }
         @Override protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mx, int my, float delta) {
-            g.fill(getX(),getY(),getRight(),getBottom(),active && isHoveredOrFocused() ? 0x994A5D56 : 0x55000000);
-            if (isFocused()) g.outline(getX(),getY(),width,height,CYAN);
-            boolean tab=getMessage().getString().equals(Component.translatable("luminanova.video.general").getString())
-                    || getMessage().getString().equals(Component.translatable("luminanova.video.quality").getString());
+            boolean tab = getX()==left+4;
             if (tab) {
-                boolean selected=getMessage().getString().equals(Component.translatable(activePage==0?"luminanova.video.general":"luminanova.video.quality").getString());
-                g.text(font,getMessage(),getX()+12,getY()+8,selected?0xFF80E9CD:0xFF538578);
-                if (selected) g.fill(getX(),getY(),getX()+3,getBottom(),0xFF80E9CD);
+                int page=(getY()-top-42)/26;
+                boolean selected=query.isBlank() && activePage==page;
+                g.fill(getX(),getY(),getRight(),getBottom(),selected?0xFF263F3C:isHoveredOrFocused()?0xFF26343C:0x00141A20);
+                if (selected) g.fill(getX(),getY(),getX()+2,getBottom(),ACCENT);
+                if (isFocused()) g.outline(getX(),getY(),width,height,ACCENT);
+                g.text(font,getMessage(),getX()+10,getY()+8,selected?ACCENT:0xFFB4C6C0);
+            } else {
+                g.fill(getX(),getY(),getRight(),getBottom(),!active?0xD0182026:isHoveredOrFocused()?0xFF355149:0xEE283B38);
+                g.outline(getX(),getY(),width,height,isFocused()?ACCENT:active?0xFF58786C:0xFF35434A);
+                g.centeredText(font,getMessage(),getX()+width/2,getY()+7,active?0xFFEAF5F0:0xFF71847D);
             }
-            else g.centeredText(font,getMessage(),getX()+width/2,getY()+7,active?0xFFFFFFFF:0xFF718093);
         }
     }
 
@@ -382,7 +419,7 @@ public final class NovaVideoSettingsScreen extends Screen {
         @Override protected void applyValue() { stage(setting); placeRows(); }
         private <T> void stage(Setting<T> s) { s.step=s.min+(int)Math.round(value*(s.max-s.min)); s.pending=s.decode.apply(s.step); }
         @Override public void extractWidgetRenderState(GuiGraphicsExtractor g,int mx,int my,float delta) {
-            if (isHoveredOrFocused()) g.fill(getX(),getY(),getRight(),getBottom(),0x604D5A58);
+            g.fill(getX(),getY(),getRight(),getBottom()-1,isHoveredOrFocused()?0xFF30403F:0x80242E34);
             if (isFocused()) g.outline(getX(),getY(),width,height,0xFF80E9CD);
             int color=active?0xFFFFFFFF:0xFF77817E;
             Component label=Component.translatable(setting.key);
@@ -390,10 +427,10 @@ public final class NovaVideoSettingsScreen extends Screen {
             Component shown=setting.option==ultraOptimization ? Component.translatable("luminanova.options.ultra.value",setting.display.apply(setting.step))
                     : setting.display.apply(setting.step);
             int valueWidth=setting.control==Control.CHECKBOX?12:font.width(shown);
-            int labelWidth=Math.max(20,width-valueWidth-20);
+            int labelWidth=Math.max(20,width-Math.max(valueWidth,controlWidth())-18);
             g.enableScissor(getX()+6,getY(),getX()+6+labelWidth,getBottom());
             g.text(font,label,getX()+6,getY()+8,color); g.disableScissor();
-            if (!active) g.horizontalLine(getX()+6,getX()+6+Math.min(font.width(label),labelWidth),getY()+12,color);
+
             if (setting.control==Control.CHECKBOX) {
                 int x=getRight()-18,y=getY()+6;
                 g.outline(x,y,12,12,color);
@@ -403,7 +440,14 @@ public final class NovaVideoSettingsScreen extends Screen {
                 g.fill(x,y-1,getRight()-4,y+1,0xFFADB7B3);
                 int thumb=x+(int)(value*(controlWidth()-8)); g.fill(thumb-2,y-5,thumb+2,y+5,0xFF80E9CD);
                 g.text(font,shown,getRight()-valueWidth-4,getY()+1,0xFFFFFFFF);
-            } else g.text(font,shown,getRight()-valueWidth-6,getY()+8,setting.dirty()?0xFF80E9CD:color);
+            } else {
+                if (setting.control==Control.CYCLE) {
+                    int x=getRight()-Math.max(valueWidth+16,controlWidth())+2;
+                    g.fill(x,getY()+3,getRight()-3,getBottom()-4,0xFF19252B);
+                    g.text(font,Component.literal("›"),getRight()-12,getY()+8,ACCENT);
+                    g.text(font,shown,getRight()-valueWidth-18,getY()+8,setting.dirty()?ACCENT:color);
+                } else g.text(font,shown,getRight()-valueWidth-6,getY()+8,setting.dirty()?ACCENT:color);
+            }
         }
     }
 }

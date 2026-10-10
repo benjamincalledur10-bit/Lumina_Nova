@@ -35,9 +35,18 @@ dependencies {
         runtimeOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
     }
     compileOnly("maven.modrinth:sodium:${sodium_version}") { transitive = false }
-    if (providers.gradleProperty('withIris').getOrElse('false').toBoolean()) {
+    if (providers.gradleProperty('withIris').getOrElse('false').toBoolean()
+            || providers.gradleProperty('withSodium').getOrElse('false').toBoolean()) {
         runtimeOnly("maven.modrinth:sodium:${sodium_version}") { transitive = false }
+    }
+    if (providers.gradleProperty('withIris').getOrElse('false').toBoolean()) {
         runtimeOnly("maven.modrinth:iris:${iris_version}") { transitive = false }
+    }
+    if (providers.gradleProperty('withLithium').getOrElse('false').toBoolean()) {
+        runtimeOnly("maven.modrinth:lithium:${lithium_version}") { transitive = false }
+    }
+    if (providers.gradleProperty('withCompatPack').getOrElse('false').toBoolean()) {
+        runtimeOnly fileTree('verification-mods') { include '*.jar' }
     }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.14.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.0'
@@ -88,6 +97,23 @@ loom {
             runDir 'run-ui-smoke'
             vmArg '-Dluminanova.uiSmoke=true'
         }
+        visibilityWorld {
+            client()
+            source sourceSets.testmod
+            runDir 'run-visibility-world'
+            vmArg '-Dfabric.client.gametest=true'
+            vmArg '-Dluminanova.visibilityWorld=true'
+        }
+        performanceWorld {
+            client()
+            source sourceSets.testmod
+            runDir 'run-performance-world'
+            vmArg '-Dfabric.client.gametest=true'
+            vmArg '-Dluminanova.performanceWorld=true'
+            vmArg "-Dluminanova.benchmark.spacing=${providers.gradleProperty('benchmarkSpacing').getOrElse('3')}"
+            vmArg "-Dluminanova.benchmark.runs=${providers.gradleProperty('benchmarkRuns').getOrElse('5')}"
+            vmArg "-Dluminanova.benchmark.seconds=${providers.gradleProperty('benchmarkSeconds').getOrElse('15')}"
+        }
     }
 }
 
@@ -119,9 +145,90 @@ tasks.register('prepareUiSmoke') {
         config.parentFile.mkdirs()
         config.text = 'enabled=true\nfast_frustum=true\nultra_optimization=false\n'
         file('run-ui-smoke/config/luminanova-quality.properties').delete()
+        file('run-ui-smoke/config/luminanova-performance.properties').delete()
     }
 }
 tasks.named('runUiSmoke') { dependsOn 'prepareUiSmoke' }
+
+tasks.register('prepareQualityWorld') {
+    doLast {
+        file('run-quality-world/config').mkdirs()
+        file('run-quality-world/options.txt').text = 'onboardAccessibility:false\nguiScale:2\nlang:es_es\nimprovedTransparency:false\n'
+        file('run-quality-world/config/luminanova.properties').text = 'enabled=true\nfast_frustum=false\nultra_optimization=false\n'
+        file('run-quality-world/config/luminanova-quality.properties').delete()
+        file('run-quality-world/config/luminanova-performance.properties').delete()
+    }
+}
+tasks.named('runQualityWorld') { dependsOn 'prepareQualityWorld' }
+
+tasks.register('preparePerformanceWorld') {
+    doLast { file('run-performance-world/benchmark-results/results.json').delete() }
+}
+tasks.named('runPerformanceWorld') {
+    dependsOn 'preparePerformanceWorld'
+    doLast {
+        if (!file('run-performance-world/benchmark-results/results.json').exists()) {
+            throw new GradleException('Performance world did not finish or export its complete results')
+        }
+    }
+}
+
+tasks.register('testmodJar', Jar) {
+    archiveClassifier = 'test-harness'
+    from sourceSets.testmod.output
+}
+
+// Exercise the installable JAR with production Identifier validation and mod discovery.
+tasks.register('runPackagedCompat', JavaExec) {
+    dependsOn 'jar', 'testmodJar'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+    mainClass = 'net.fabricmc.loader.impl.launch.knot.KnotClient'
+    classpath = sourceSets.client.runtimeClasspath - sourceSets.client.output - sourceSets.main.output
+    def worldTest = providers.gradleProperty('packagedWorld').getOrElse('false').toBoolean()
+    workingDir = file(worldTest ? 'run-packaged-world' : 'run-packaged-compat')
+    jvmArgs '-Dfabric.development=false', "-Dluminanova.compatSmoke=${!worldTest}"
+    if (System.getProperty('os.name').toLowerCase(java.util.Locale.ROOT).contains('mac')) {
+        jvmArgs '-XstartOnFirstThread'
+    }
+    if (worldTest) {
+        jvmArgs '-Dfabric.client.gametest=true', '-Dluminanova.performanceWorld=true',
+                "-Dluminanova.benchmark.spacing=${providers.gradleProperty('benchmarkSpacing').getOrElse('3')}",
+                "-Dluminanova.benchmark.runs=${providers.gradleProperty('benchmarkRuns').getOrElse('1')}",
+                "-Dluminanova.benchmark.seconds=${providers.gradleProperty('benchmarkSeconds').getOrElse('3')}"
+    }
+    args '--gameDir', '.', '--assetIndex', '26.3-34', '--assetsDir', "${gradle.gradleUserHomeDir}/caches/fabric-loom/assets"
+    doFirst {
+        workingDir.mkdirs()
+        delete new File(workingDir,'compat-ok.txt')
+        delete new File(workingDir,'benchmark-results/results.json')
+        def mods = new File(workingDir, 'mods')
+        delete mods
+        mods.mkdirs()
+        // In production Fabric discovers optional mods from mods/, not the dev classpath.
+        def pack = providers.gradleProperty('withCompatPack').getOrElse('false').toBoolean()
+        copy {
+            from(pack ? fileTree('verification-mods') { include '*.jar' } : configurations.runtimeClasspath.filter {
+                it.name.startsWith('fabric-api-') || it.name.startsWith('sodium-') || it.name.startsWith('iris-')
+                        || it.name.startsWith('lithium-') || it.name.startsWith('modmenu-')
+            })
+            into mods
+        }
+        copy { from tasks.jar.archiveFile; from tasks.testmodJar.archiveFile; into mods }
+        if (worldTest) {
+            // The aggregate production Fabric API omits this development test module.
+            copy {
+                from configurations.runtimeClasspath.filter { it.name.startsWith('fabric-client-gametest-api-v1-') }
+                into mods
+            }
+        }
+        new File(workingDir,'options.txt').text = 'onboardAccessibility:false\nguiScale:2\nlang:es_es\n'
+    }
+    doLast {
+        if (!new File(workingDir,worldTest ? 'benchmark-results/results.json' : 'compat-ok.txt').exists()) {
+            throw new GradleException('Packaged client did not complete its checks')
+        }
+    }
+}
 
 dependencies {
     benchmarkImplementation 'org.openjdk.jmh:jmh-core:1.37'

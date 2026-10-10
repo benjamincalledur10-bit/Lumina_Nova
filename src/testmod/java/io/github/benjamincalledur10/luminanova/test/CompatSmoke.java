@@ -27,7 +27,9 @@ public final class CompatSmoke implements ClientModInitializer {
         var config=ConfigManager.CONFIG;
         if (phase==0) {
             check(config.getModOptions().stream().anyMatch(mod -> mod.configId().equals("luminanova")),"Lumina module registered");
-            check(config.getModOptions().stream().anyMatch(mod -> mod.configId().equals("iris")),"Iris module registered");
+            if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("iris")) {
+                check(config.getModOptions().stream().anyMatch(mod -> mod.configId().equals("iris")),"Iris module registered");
+            }
             var screen=NovaScreens.create(mc.gui.screen());
             check(screen instanceof net.caffeinemc.mods.sodium.client.gui.VideoSettingsScreen,"Shared Sodium screen");
             mc.gui.setScreen(screen);
@@ -35,13 +37,15 @@ public final class CompatSmoke implements ClientModInitializer {
             ((net.caffeinemc.mods.sodium.client.gui.VideoSettingsScreen)screen).jumpToPage(lumina.pages().get(1));
             phase++;
         } else if (phase==1) {
-            Screenshot.grab(mc.gameDirectory,"alpha4-sodium-iris.png",mc.gameRenderer.mainRenderTarget(),1,c -> {});
+            Screenshot.grab(mc.gameDirectory,"alpha5-sodium-shared.png",mc.gameRenderer.mainRenderTarget(),1,c -> {});
             modify("options.renderClouds",CloudStatus.OFF);
             modify("options.framerateLimit",120);
             modify("texel_interpolation",com.mojang.renderpearl.api.textures.FilterMode.LINEAR);
             modify("fluid_culling",NovaSodiumIntegration.Policy.ALTERNATIVE);
             modify("fluid_shaping",NovaSodiumIntegration.Policy.ALTERNATIVE);
             modify("entity_sorting",NovaSodiumIntegration.Policy.ALTERNATIVE);
+            boolean cullingAvailable=io.github.benjamincalledur10.luminanova.compat.NovaRenderCompatibility.blockEntityOwner().isEmpty();
+            if (cullingAvailable) modify("block_entity_culling",true);
             config.applyAllOptions();
             check(mc.options.cloudStatus().get()==CloudStatus.OFF,"Shared clouds apply");
             check(mc.options.framerateLimit().get()==120,"Shared FPS apply");
@@ -49,12 +53,16 @@ public final class CompatSmoke implements ClientModInitializer {
             check(quality.pixelFilteringMode==com.mojang.renderpearl.api.textures.FilterMode.LINEAR,"Sodium texel policy");
             check(quality.hiddenFluidCulling && quality.improvedFluidShaping && quality.useClosestPointEntitySort,"Sodium visual policies");
             check(java.nio.file.Files.exists(mc.gameDirectory.toPath().resolve("config/sodium-options.json")),"Sodium config saved");
-            System.out.println("LUMINA_COMPAT_OK sodium=0.9.2 iris=1.11.7");
+            if (cullingAvailable) check(io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.current().blockEntityCulling(),"Shared live culling applies");
+            try { java.nio.file.Files.writeString(mc.gameDirectory.toPath().resolve("compat-ok.txt"),
+                    "development="+net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment()+"\n"); }
+            catch (java.io.IOException failure) { throw new RuntimeException(failure); }
+            System.out.println("LUMINA_COMPAT_OK development="+net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment());
             mc.stop(); phase++;
         }
     }
     @SuppressWarnings("unchecked") private static <T> void modify(String key,T value) {
-        var option=ConfigManager.CONFIG.getOption(Identifier.fromNamespaceAndPath("luminanova",key));
+        var option=ConfigManager.CONFIG.getOption(io.github.benjamincalledur10.luminanova.compat.NovaOptionIds.of(key));
         ((StatefulOption<T>)option).modifyValue(value);
     }
     private static void check(boolean success,String message) { if (!success) throw new AssertionError(message); }

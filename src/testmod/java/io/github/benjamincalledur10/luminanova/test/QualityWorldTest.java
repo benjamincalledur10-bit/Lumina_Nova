@@ -32,6 +32,7 @@ import net.minecraft.world.level.material.Fluid;
 /** Real isolated flat world: verifies renderer state and transformed visual policy effects. */
 public final class QualityWorldTest implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
+        if (Boolean.getBoolean("luminanova.performanceWorld") || Boolean.getBoolean("luminanova.visibilityWorld")) return;
         try (var world=context.worldBuilder().create()) {
             world.getConnection().waitForChunksRender();
             world.getServer().runCommand("gamemode creative @a");

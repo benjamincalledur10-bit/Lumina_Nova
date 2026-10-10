@@ -1,8 +1,10 @@
 # Protocolo de rendimiento
 
-Este documento define las pruebas dentro del juego, todavía pendientes: no hay capturas de
-fotogramas ni resultados de FPS. La primera candidata tiene un benchmark sintético de CPU y
-pruebas diferenciales, documentados en [los resultados de la alpha](ALPHA_0.0.1_RESULTS.md).
+Este documento define el protocolo completo de validación dentro del juego. La 0.0.5 incorpora
+captura de intervalos y un **piloto más corto** con escenarios de cofres controlados; sus datos,
+duraciones y límites se documentan en [la validación de 0.0.5](ALPHA_0.0.5_VALIDATION.md).
+Ese piloto no satisface el protocolo completo descrito aquí. La candidata anterior tiene un
+benchmark sintético de CPU y pruebas diferenciales en [sus resultados](ALPHA_0.0.1_RESULTS.md).
 
 ## Condiciones controladas
 
@@ -14,7 +16,8 @@ calidad, resource packs y shaders. Mantener constantes esos valores.
 Guardar una copia del mundo de referencia con semilla y checksum. Restaurarla antes de cada ejecución.
 Fijar hora, clima, dificultad, entidades y recorrido con duración y cámara reproducibles.
 Separar pruebas de chunks ya cargados de generación/carga de terreno nuevo; no mezclarlas.
-El recorrido automatizado y los mundos de referencia todavía están pendientes de creación.
+La 0.0.5 crea automáticamente una escena plana de cofres con cámara fija. Los recorridos y
+mundos de referencia de los otros escenarios siguen pendientes.
 
 | Escenario | Trabajo principal | Comprobación visual |
 | --- | --- | --- |

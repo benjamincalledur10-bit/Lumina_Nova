@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "name": "Lumina Nova test harness",
   "environment": "client",
+  "mixins": [
+    "luminanova.test.mixins.json"
+  ],
   "entrypoints": {
     "client": [
       "io.github.benjamincalledur10.luminanova.test.FrustumSmoke",
@@ -11,7 +14,9 @@
       "io.github.benjamincalledur10.luminanova.test.CompatSmoke"
     ],
     "fabric-client-gametest": [
-      "io.github.benjamincalledur10.luminanova.test.QualityWorldTest"
+      "io.github.benjamincalledur10.luminanova.test.QualityWorldTest",
+      "io.github.benjamincalledur10.luminanova.test.PerformanceWorldTest",
+      "io.github.benjamincalledur10.luminanova.test.VisibilityWorldTest"
     ]
   },
   "depends": {

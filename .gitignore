@@ -18,3 +18,9 @@ replay_pid*
 
 /run-compat-smoke/
 /run-quality-world/
+/run-performance-world/
+/run-packaged-compat/
+/verification-mods/
+/run-packaged-world/
+
+/run-visibility-world/

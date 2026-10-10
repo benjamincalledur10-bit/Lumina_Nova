@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "io.github.benjamincalledur10.luminanova.test.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["FrameSampleMixin", "BlockEntityCountMixin"],
+  "injectors": {"defaultRequire": 1}
+}

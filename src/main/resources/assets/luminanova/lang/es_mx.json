@@ -3,14 +3,14 @@
   "luminanova.video.title": "Lumina Nova — Ajustes de vídeo",
   "luminanova.video.general": "General",
   "luminanova.video.optimization": "Optimización",
-  "luminanova.video.alpha": "v0.0.4-alpha",
+  "luminanova.video.alpha": "v0.0.5-alpha",
   "luminanova.video.save_error": "No se pudo guardar. Revisa latest.log.",
   "luminanova.options.ultra": "Ultra Optimization",
   "luminanova.options.ultra.value": "%s (vista previa)",
   "luminanova.options.ultra.tooltip": "Solo una vista previa en esta alpha. Guarda tu preferencia, pero no cambia el motor, los chunks ni las sombras y no aumenta los FPS. Prevista para una futura release; su rendimiento queda por medir.",
   "luminanova.options.ultra.pending": "Vista previa — sin efecto en FPS",
   "modmenu.summaryTranslation.luminanova": "Investigación de rendimiento y ajustes de vídeo.",
-  "modmenu.descriptionTranslation.luminanova": "Mod de cliente para Minecraft 26.3. Ajustes generales de vídeo, optimización experimental del frustum y preferencia de vista previa Ultra Optimization. No hay mejora de FPS ni superioridad sobre Sodium validada.",
+  "modmenu.descriptionTranslation.luminanova": "Mod de cliente para Minecraft 26.3 con ajustes de vídeo e investigación de rendimiento. Incluye visibilidad experimental de bloques animados y compatibilidad opcional con Sodium y Lithium. Las mejoras dependen de la escena; Ultra Optimization sigue como vista previa.",
   "luminanova.options.fullscreen_resolution": "Resolución de pantalla completa",
   "luminanova.video.apply": "Aplicar",
   "luminanova.video.accept": "Aceptar",
@@ -42,5 +42,9 @@
   "options.biomeBlendRadius.tooltip": "Área de mezcla del color entre biomas; más valores requieren reconstruir los chunks.",
   "options.mipmapLevels.tooltip": "Niveles de mipmap del atlas del terreno; aplicar recarga las texturas.",
   "luminanova.options.ultra.preview": " (vista previa)",
-  "luminanova.quality.seconds": "%s Segundos"
+  "luminanova.quality.seconds": "%s Segundos",
+  "luminanova.video.search_results": "Resultados de búsqueda",
+  "luminanova.options.block_entity_culling": "Visibilidad de bloques animados",
+  "luminanova.options.block_entity_culling.tooltip": "Experimental: evita preparar cofres, shulkers y vasijas fuera de cámara, y cofres cerrados rodeados de bloques opacos. Conserva calidad y distancias. La mejora depende de la escena.",
+  "luminanova.options.culling_owner": "Esta ruta la gestiona %s. Lumina conserva su renderizado y evita aplicar una segunda ocultación."
 }

@@ -3,14 +3,14 @@
   "luminanova.video.title": "Lumina Nova — Video Settings",
   "luminanova.video.general": "General",
   "luminanova.video.optimization": "Optimization",
-  "luminanova.video.alpha": "v0.0.4-alpha",
+  "luminanova.video.alpha": "v0.0.5-alpha",
   "luminanova.video.save_error": "Could not save. Check latest.log.",
   "luminanova.options.ultra": "Ultra Optimization",
   "luminanova.options.ultra.value": "%s (preview)",
   "luminanova.options.ultra.tooltip": "Preview only in this alpha. Saves your preference, but makes no engine, chunk or shadow changes and provides no FPS boost. Planned for a future release; performance remains to be measured.",
   "luminanova.options.ultra.pending": "Preview only — no effect on FPS",
   "modmenu.summaryTranslation.luminanova": "Experimental performance research and video settings.",
-  "modmenu.descriptionTranslation.luminanova": "Minecraft 26.3 client mod. General video settings, experimental boolean frustum optimization and an Ultra Optimization preview preference. No FPS improvement or superiority over Sodium has been validated.",
+  "modmenu.descriptionTranslation.luminanova": "Client mod for Minecraft 26.3 with video settings and performance research. Includes experimental animated block visibility and optional Sodium and Lithium compatibility. Gains depend on the scene; Ultra Optimization remains a preview.",
   "luminanova.options.fullscreen_resolution": "Fullscreen resolution",
   "luminanova.video.apply": "Apply",
   "luminanova.video.accept": "Accept",
@@ -42,5 +42,9 @@
   "options.biomeBlendRadius.tooltip": "Biome color blending area; changes rebuild chunks.",
   "options.mipmapLevels.tooltip": "Terrain atlas mipmap levels; applying reloads textures.",
   "luminanova.options.ultra.preview": " (preview)",
-  "luminanova.quality.seconds": "%s Seconds"
+  "luminanova.quality.seconds": "%s Seconds",
+  "luminanova.video.search_results": "Search results",
+  "luminanova.options.block_entity_culling": "Animated block visibility",
+  "luminanova.options.block_entity_culling.tooltip": "Experimental: skips off-camera vanilla chests, shulkers and pots, and closed chests enclosed by opaque blocks. Preserves quality and view distances. Gains depend on the scene.",
+  "luminanova.options.culling_owner": "%s manages this rendering path. Lumina preserves its rendering and avoids applying overlapping culling."
 }

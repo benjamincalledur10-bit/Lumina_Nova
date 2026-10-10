@@ -112,6 +112,21 @@ public final class NovaSodiumIntegration implements ConfigEntryPoint {
         policy(quality,"fluid_shaping",value -> sodium.improvedFluidShaping=value,() -> sodium.improvedFluidShaping,"vanilla","alternative",OptionFlag.REQUIRES_RENDERER_RELOAD);
         policy(quality,"entity_sorting",value -> sodium.useClosestPointEntitySort=value,() -> sodium.useClosestPointEntitySort,"default","enhanced");
         mod.addPage(quality);
+        var performance=builder.createOptionPage().setName(text("luminanova.video.optimization"));
+        performance.addOption(builder.createBooleanOption(id("block_entity_culling"))
+                .setName(text("luminanova.options.block_entity_culling"))
+                .setTooltip(NovaRenderCompatibility.blockEntityOwner().isEmpty()
+                        ? text("luminanova.options.block_entity_culling.tooltip")
+                        : text("luminanova.options.culling_owner",NovaRenderCompatibility.blockEntityOwner()))
+                .setEnabled(NovaRenderCompatibility.blockEntityOwner().isEmpty()).setDefaultValue(false)
+                .setStorageHandler(() -> {}).setBinding(value -> {
+                    var requested=new io.github.benjamincalledur10.luminanova.config.NovaPerformanceConfig(value);
+                    if (!requested.save(io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.PATH,LoggerFactory.getLogger("luminanova"))) {
+                        throw new IllegalStateException("Cannot save Lumina Nova performance settings");
+                    }
+                    io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.apply(requested);
+                },() -> io.github.benjamincalledur10.luminanova.config.NovaPerformanceSettings.current().blockEntityCulling()));
+        mod.addPage(performance);
     }
 
     private void policy(OptionPageBuilder page,String key,Consumer<Boolean> setter,Supplier<Boolean> getter,String off,String on,OptionFlag... flags) {
@@ -146,7 +161,7 @@ public final class NovaSodiumIntegration implements ConfigEntryPoint {
     private static Component tooltip(String key) {
         return net.minecraft.locale.Language.getInstance().has(key+".tooltip")?text(key+".tooltip"):text(key);
     }
-    private static Identifier id(String key) { return Identifier.fromNamespaceAndPath("luminanova",key); }
+    private static Identifier id(String key) { return NovaOptionIds.of(key); }
     private static Component text(String key,Object... values) { return Component.translatable(key,values); }
     public enum Policy { DEFAULT, ALTERNATIVE }
 }

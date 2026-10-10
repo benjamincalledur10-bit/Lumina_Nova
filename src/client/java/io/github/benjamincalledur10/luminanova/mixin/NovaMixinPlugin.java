@@ -10,6 +10,13 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 /** Sodium owns its render policies when installed. Its public menu integration remains available. */
 public final class NovaMixinPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        var loader = FabricLoader.getInstance();
+        if (mixin.endsWith("BlockEntityVisibilityMixin")) {
+            return io.github.benjamincalledur10.luminanova.compat.NovaRenderCompatibility.blockEntityOwner().isEmpty();
+        }
+        if (mixin.endsWith("FrustumMixin")) {
+            return !loader.isModLoaded("sodium") && !loader.isModLoaded("vulkanmod");
+        }
         boolean quality = mixin.endsWith("FluidQualityMixin") || mixin.endsWith("TerrainSamplerMixin") || mixin.endsWith("EntitySortMixin");
         return !quality || !FabricLoader.getInstance().isModLoaded("sodium");
     }
